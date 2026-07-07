@@ -75,3 +75,61 @@ docker compose -f compose/docker-compose.full.yml down -v       # also drop pgda
 
 The original observability-only stack (`compose/docker-compose.yml`, public images only, no custom
 builds) still exists and is what CI validates with `docker compose config`.
+
+---
+
+## Pilot operations (supervised trial)
+
+> **Pilot software. Synthetic data by default. NOT a certified production/POS system** — no real
+> payments, no fiscal receipts (KSeF), no compliance certification. See `PILOT_BOUNDARIES.md` and
+> the human/legal checklist in the vault's `PILOT_HUMAN.md`.
+
+### One-command install (for a non-developer host)
+
+```powershell
+cp .env.pilot.example .env      # then edit .env — set POSTGRES_PASSWORD + the two JWT secrets
+./scripts/pilot.ps1 check-env   # fails fast if a REQUIRED value is missing or still "change-me"
+./scripts/pilot.ps1 install     # check-env -> build+up -> wait healthy -> print URLs  (idempotent)
+```
+
+Git Bash / Linux hosts use `./scripts/pilot.sh <same-commands>`. `install`/`up` are idempotent.
+
+### Load a real venue (real-data readiness)
+
+The demo runs on synthetic data. To load a real venue's menu + tables **without code changes**:
+
+```sh
+# 1. copy restos-core/venue.example.json, fill in the real menu/tables/hours/currency
+# 2. validate + generate SQL, then apply it to the running Postgres:
+node ../restos-core/scripts/load-venue.mjs my-venue.json \
+  | docker compose -f compose/docker-compose.full.yml exec -T postgres psql -U restos -d restos
+```
+
+`load-venue.mjs` **validates first** and rejects malformed data with clear, row-level errors
+(nothing is applied unless the whole file is valid). Verified 2026-07-07: the example venue loads as
+2 categories / 4 items / 4 tables; a malformed file is rejected with 5 explicit errors.
+
+### Backups + restore drill
+
+```
+./scripts/pilot.ps1 backup            # pg_dump (--clean --if-exists) -> backups\restos-<ts>.sql.gz
+./scripts/pilot.ps1 restore <file>    # restore from a backup (into an empty or rebuilt DB)
+```
+
+**Restore drill (run 2026-07-07):** `pilot.sh backup` produced a 4 KB gz of the live DB (25 menu
+rows); restoring it into a fresh temp database reproduced **25/25 rows** — backup is restorable.
+Schedule `backup` daily (Task Scheduler / cron) and keep copies off the pilot machine.
+
+### Upgrade + rollback
+
+```
+./scripts/pilot.ps1 upgrade           # backs up first, then rebuild+recreate
+# rollback: ./scripts/pilot.ps1 restore <the backup that upgrade just made>, then up
+```
+
+### Health + alerting
+
+- **Grafana → "Pilot health — is everything up?"** (http://localhost:3001) — per-service UP/DOWN.
+- **Prometheus alert rules** (`compose/alerts.yml`): `ServiceDown`, `CoreHighErrorRate`,
+  `NoScrapeTargets` — firing alerts show at http://localhost:9090/alerts. Routing them to a channel
+  a human watches (email/Slack/SMS) needs Alertmanager — a `PILOT_HUMAN.md` item, not code.

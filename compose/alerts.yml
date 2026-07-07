@@ -1,0 +1,33 @@
+# Prometheus alert rules for a supervised pilot. Firing alerts show at
+# http://localhost:9090/alerts and on the Grafana "Pilot health" dashboard.
+# Routing to email/Slack/phone needs Alertmanager — that's a PILOT_HUMAN.md item
+# (a real support channel is a human commitment, not code).
+groups:
+  - name: restos-pilot
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is DOWN"
+          description: "Prometheus target {{ $labels.job }} ({{ $labels.instance }}) has been unreachable for over 1 minute. A pilot host should check `docker compose ps` and the service logs."
+
+      - alert: CoreHighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{job="restos-core",outcome="SERVER_ERROR"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "restos-core is returning 5xx errors"
+          description: "restos-core server-error rate has been elevated for 5 minutes."
+
+      - alert: NoScrapeTargets
+        expr: count(up == 1) < 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monitoring sees almost nothing up"
+          description: "Fewer than 2 scrape targets are up — the stack is likely down or Prometheus is misconfigured."

@@ -8,6 +8,11 @@ the services plug into.
 [![ci](https://github.com/arcsymer/restos-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/arcsymer/restos-platform/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
+> **Pilot software.** Synthetic data by default; **not a certified production/POS system** — no real
+> payments, no fiscal receipts (KSeF), no compliance certification. For a supervised free pilot see
+> [`PILOT_BOUNDARIES.md`](PILOT_BOUNDARIES.md), the [`RUNBOOK.md`](RUNBOOK.md) "Pilot operations"
+> section, and the operator's human/legal checklist (`PILOT_HUMAN.md`, in the private vault).
+
 ## What's here
 
 - **`.github/workflows/reusable-security.yml`** — a `workflow_call` security scan (gitleaks +

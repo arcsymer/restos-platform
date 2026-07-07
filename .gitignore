@@ -1,6 +1,10 @@
 .DS_Store
 Thumbs.db
 
-# local compose overrides (only .env.example is committed)
+# local compose overrides (only .env.example / .env.pilot.example are committed)
 .env
 compose/.env
+
+# pilot backups (never commit real data dumps)
+backups/
+*.sql.gz
