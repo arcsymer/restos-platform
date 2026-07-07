@@ -1,0 +1,32 @@
+name: reusable-security
+
+# Reusable security scan every RestOS repo can call (no Docker daemon needed):
+#   jobs:
+#     security:
+#       uses: arcsymer/restos-platform/.github/workflows/reusable-security.yml@main
+on:
+  workflow_call:
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  trivy-fs:
+    # Filesystem scan: dependency vulnerabilities, IaC/config misconfig, and secrets.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "0" # report, don't fail the build on upstream CVEs (advisory)
