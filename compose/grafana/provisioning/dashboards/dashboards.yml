@@ -1,0 +1,12 @@
+apiVersion: 1
+providers:
+  - name: RestOS
+    orgId: 1
+    folder: RestOS
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

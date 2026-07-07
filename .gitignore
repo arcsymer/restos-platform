@@ -1,2 +1,6 @@
 .DS_Store
 Thumbs.db
+
+# local compose overrides (only .env.example is committed)
+.env
+compose/.env

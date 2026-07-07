@@ -18,24 +18,41 @@ the services plug into.
       uses: arcsymer/restos-platform/.github/workflows/reusable-security.yml@main
   ```
 - **`SECURITY.md`** — the ecosystem security policy and what's enforced where.
-- **`compose/`** — a runnable observability stack (only public images, no custom builds):
-  ```sh
-  docker compose -f compose/docker-compose.yml up
-  ```
-  Brings up **Postgres** (:5432), **Prometheus** (:9090), and **Grafana** (:3000, anonymous
-  access, Prometheus datasource pre-provisioned). Point restos-core / restos-portal at this
-  Postgres and let Prometheus scrape their metrics (restos-core already exposes Actuator).
+- **`compose/`** — two stacks:
+  - **`docker-compose.full.yml`** — the whole ecosystem in one command (see below).
+  - **`docker-compose.yml`** — a lean observability-only stack (public images, no custom builds):
+    `docker compose -f compose/docker-compose.yml up` → Postgres, Prometheus, Grafana. This is the
+    file CI validates with `docker compose config`.
+
+## Run the whole stack — `docker compose up`
+
+```sh
+docker compose -f compose/docker-compose.full.yml up --build
+```
+
+One command stands up the ecosystem locally (all RestOS repos as siblings — see
+[`RUNBOOK.md`](RUNBOOK.md)):
+
+- **Postgres** backing **restos-core** (Java 21 / Spring Boot, `:8080`) with real Micrometer
+  metrics at `/actuator/prometheus`;
+- **restos-portal** (NestJS, SQLite, `:3000`);
+- **restos-web** (Angular, static nginx, `:8081`);
+- **Redpanda** + a POS **producer** and a **streaming bronze consumer** (the D1 slice → Delta Lake);
+- the observability spine — **OpenTelemetry Collector → Prometheus → Grafana** (`:3001`, a
+  provisioned dashboard with live app metrics).
+
+Verified end to end — see **[docs/demo-stack.md](docs/demo-stack.md)** for the real transcript and
+screenshots:
+
+![Grafana — RestOS Live Stack Overview](docs/grafana-overview.png)
 
 ## Status — honest scope
 
-The **reusable security workflow, the cross-repo Dependabot/gitleaks retrofit, and the
-observability compose stack are done** and CI-validated (`docker compose config` runs in CI).
-
-**Deferred (needs local Docker, which this build machine doesn't have):** actually running
-`docker compose up` end-to-end, adding a per-service Dockerfile for P1/P3/P4 so the whole app tier
-comes up in one command, and a provisioned Grafana dashboard with live app metrics. Exact steps are
-in the ecosystem's `HUMAN_TODO`. The compose file and scrape config here are real and run on any
-Docker host; wiring each app container in is the remaining step.
+The reusable security workflow, the cross-repo Dependabot/gitleaks retrofit, the observability
+compose stack, **and now the full `docker compose up` (every app tier containerised, one command,
+with a provisioned Grafana dashboard showing live metrics) plus the D1 streaming slice** are all
+done and validated. It is a **local developer stack on synthetic data** — no production, no real
+users, no live metrics claims beyond what the screenshots show.
 
 ## License
 
