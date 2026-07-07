@@ -49,8 +49,10 @@ Inspect what landed:
 docker compose -f compose/docker-compose.full.yml logs restos-data-streamer   # "[streamer] landed batch, total=..."
 ```
 
-Optional heavier frontend (Flutter build image): add `--profile courier` → restos-courier on
-http://localhost:8082/.
+Optional courier UI: `docker compose -f compose/docker-compose.full.yml --profile courier up -d
+--build restos-courier` → the Flutter kitchen-display on http://localhost:8082/. The image serves
+restos-courier's pre-built `build/web` bundle (tiny nginx, no Flutter toolchain), so run
+`flutter build web --release` in restos-courier first — `build/` is gitignored.
 
 ## Teardown
 
