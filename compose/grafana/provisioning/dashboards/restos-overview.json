@@ -61,6 +61,14 @@
       "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [ { "refId": "A", "expr": "sum by (uri) (rate(http_server_requests_seconds_count{job=\"otel-collector-export\"}[1m]))", "legendFormat": "{{uri}}", "datasource": { "type": "prometheus", "uid": "prometheus" } } ]
+    },
+    {
+      "id": 99,
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 16 },
+      "options": { "mode": "markdown", "content": "RestOS observability &nbsp;·&nbsp; built by **@arcsymer**" }
     }
   ]
 }
